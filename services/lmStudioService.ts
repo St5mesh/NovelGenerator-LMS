@@ -4,6 +4,11 @@ import { withResilienceTracking, apiResilienceManager } from '../utils/apiResili
 const LM_STUDIO_BASE_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1';
 const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'llama-3.1-instruct-13b';
 
+// Timeout configurations for different request types
+const TIMEOUT_REGULAR_REQUEST = 30000; // 30 seconds for regular API calls
+const TIMEOUT_STREAMING_REQUEST = 60000; // 60 seconds for streaming API calls
+const TIMEOUT_MODELS_REQUEST = 10000; // 10 seconds for model list requests
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -165,7 +170,7 @@ export async function generateLMStudioText(
       
       // Create AbortController for timeout handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_REGULAR_REQUEST);
       
       try {
         const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
@@ -199,7 +204,7 @@ export async function generateLMStudioText(
         
         // Handle timeout specifically
         if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('LM Studio API Error: Request timed out after 30 seconds. The server may be overloaded or not responding.');
+          throw new Error(`LM Studio API Error: Request timed out after ${TIMEOUT_REGULAR_REQUEST / 1000} seconds. The server may be overloaded or not responding.`);
         }
         
         throw error;
@@ -249,7 +254,7 @@ export async function generateLMStudioTextStream(
 
       // Create AbortController for timeout handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for streaming
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_STREAMING_REQUEST);
       
       try {
         const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
@@ -308,7 +313,7 @@ export async function generateLMStudioTextStream(
         
         // Handle timeout specifically
         if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('LM Studio API Error: Streaming request timed out after 60 seconds. The server may be overloaded or not responding.');
+          throw new Error(`LM Studio API Error: Streaming request timed out after ${TIMEOUT_STREAMING_REQUEST / 1000} seconds. The server may be overloaded or not responding.`);
         }
         
         throw error;
@@ -326,7 +331,7 @@ export async function getLMStudioModels(): Promise<string[]> {
   try {
     // Create AbortController for timeout handling
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout for models
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MODELS_REQUEST);
     
     try {
       const response = await fetch(`${LM_STUDIO_BASE_URL}/models`, {
@@ -346,7 +351,7 @@ export async function getLMStudioModels(): Promise<string[]> {
       
       // Handle timeout specifically
       if (error instanceof Error && error.name === 'AbortError') {
-        console.error('Failed to fetch LM Studio models: Request timed out after 10 seconds');
+        console.error(`Failed to fetch LM Studio models: Request timed out after ${TIMEOUT_MODELS_REQUEST / 1000} seconds`);
         return [];
       }
       
