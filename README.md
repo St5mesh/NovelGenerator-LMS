@@ -1260,11 +1260,18 @@ The pipeline generates multi-threaded narratives. It tracks multiple character p
 
 1. Download and install [LM Studio](https://lmstudio.ai/)
 2. Download the `llama-3.1-instruct-13b` model (or your preferred model)
-3. Start LM Studio server on `http://127.0.0.1:1234/v1`
-4. Ensure the following endpoints are available:
+3. Configure LM Studio server settings:
+   - Go to **Developer** tab in LM Studio
+   - Enable **CORS (Cross-Origin Resource Sharing)**
+   - Set port to `1234` (default)
+   - Click **Start Server**
+4. Verify server is running at `http://127.0.0.1:1234/v1`
+5. Ensure the following endpoints are available:
    - `GET /v1/models`
    - `POST /v1/chat/completions`
    - `POST /v1/embeddings`
+
+> **Important:** CORS must be enabled in LM Studio to prevent OPTIONS preflight request failures that can cause the application to freeze during generation.
 
 ### 2. Install NovelGenerator Dependencies
 
@@ -1534,9 +1541,18 @@ lsof -ti:3000 | xargs kill
 **LM Studio errors:**
 - Verify LM Studio is running: Check if you can access http://127.0.0.1:1234/v1/models in your browser
 - Ensure the model is loaded in LM Studio
+- **Enable CORS in LM Studio** (Developer tab) - This is critical to prevent freezing during generation
 - Check firewall settings if connecting from another machine
 - Verify `.env` settings match your LM Studio configuration
 - Try restarting LM Studio if connection fails
+
+**CORS/Freezing Issues:**
+If the application freezes at "Generating Detailed Chapter-by-Chapter Plan..." with OPTIONS requests:
+1. Open LM Studio
+2. Go to **Developer** tab
+3. Ensure **CORS** is **enabled**
+4. Restart the LM Studio server
+5. Refresh the NovelGenerator page and try again
 
 **Generation quality issues:**
 - Increase model size (e.g., switch to 70B model) for better quality
