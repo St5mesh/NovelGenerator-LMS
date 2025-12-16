@@ -4,6 +4,11 @@ import { withResilienceTracking, apiResilienceManager } from '../utils/apiResili
 const LM_STUDIO_BASE_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1';
 const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'llama-3.1-instruct-13b';
 
+// Timeout configurations for different request types
+const TIMEOUT_REGULAR_REQUEST = 30000; // 30 seconds for regular API calls
+const TIMEOUT_STREAMING_REQUEST = 60000; // 60 seconds for streaming API calls
+const TIMEOUT_MODELS_REQUEST = 10000; // 10 seconds for model list requests
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -163,29 +168,48 @@ export async function generateLMStudioText(
 
       console.log(`🔄 Sending request to LM Studio API (model: ${LM_STUDIO_MODEL})...`);
       
-      const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      // Create AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_REGULAR_REQUEST);
+      
+      try {
+        const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data: ChatCompletionResponse = await response.json();
+        
+        if (!data.choices || data.choices.length === 0) {
+          throw new Error('No response from LM Studio');
+        }
+        
+        const text = data.choices[0].message.content;
+        console.log(`✅ Received response from LM Studio API (${text.length} chars)`);
+        
+        return text;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        // Handle timeout specifically
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(`LM Studio API Error: Request timed out after ${TIMEOUT_REGULAR_REQUEST / 1000} seconds. The server may be overloaded or not responding.`);
+        }
+        
+        throw error;
       }
 
-      const data: ChatCompletionResponse = await response.json();
-      
-      if (!data.choices || data.choices.length === 0) {
-        throw new Error('No response from LM Studio');
-      }
-
-      const text = data.choices[0].message.content;
-      console.log(`✅ Received response from LM Studio API (${text.length} chars)`);
-      
-      return text;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -228,52 +252,72 @@ export async function generateLMStudioTextStream(
         stream: true
       };
 
-      const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body reader available');
-      }
-
-      const decoder = new TextDecoder();
-      let fullText = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
-
-        for (const line of lines) {
-          const data = line.replace('data: ', '').trim();
-          if (data === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullText += content;
-              onChunk(content);
+      // Create AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_STREAMING_REQUEST);
+      
+      try {
+        const response = await fetch(`${LM_STUDIO_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+        
+        if (!response.ok) {
+          clearTimeout(timeoutId);
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const reader = response.body?.getReader();
+        if (!reader) {
+          clearTimeout(timeoutId);
+          throw new Error('No response body reader available');
+        }
+        
+        const decoder = new TextDecoder();
+        let fullText = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+          
+          for (const line of lines) {
+            const data = line.replace('data: ', '').trim();
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullText += content;
+                onChunk(content);
+              }
+            } catch (e) {
+              // Skip invalid JSON chunks
             }
-          } catch (e) {
-            // Skip invalid JSON chunks
           }
         }
+        
+        // Clear timeout only after streaming completes successfully
+        clearTimeout(timeoutId);
+        return fullText;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        // Handle timeout specifically
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(`LM Studio API Error: Streaming request timed out after ${TIMEOUT_STREAMING_REQUEST / 1000} seconds. The server may be overloaded or not responding.`);
+        }
+        
+        throw error;
       }
-
-      return fullText;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -285,13 +329,34 @@ export async function generateLMStudioTextStream(
  */
 export async function getLMStudioModels(): Promise<string[]> {
   try {
-    const response = await fetch(`${LM_STUDIO_BASE_URL}/models`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch models`);
-    }
+    // Create AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MODELS_REQUEST);
+    
+    try {
+      const response = await fetch(`${LM_STUDIO_BASE_URL}/models`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch models`);
+      }
 
-    const data = await response.json();
-    return data.data?.map((model: any) => model.id) || [];
+      const data = await response.json();
+      return data.data?.map((model: any) => model.id) || [];
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // Handle timeout specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error(`Failed to fetch LM Studio models: Request timed out after ${TIMEOUT_MODELS_REQUEST / 1000} seconds`);
+        return [];
+      }
+      
+      throw error;
+    }
   } catch (error) {
     console.error('Failed to fetch LM Studio models:', error);
     return [];
