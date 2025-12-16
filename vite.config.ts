@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.LM_STUDIO_URL': JSON.stringify(env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1'),
+        'process.env.LM_STUDIO_MODEL': JSON.stringify(env.LM_STUDIO_MODEL || 'llama-3.1-instruct-13b')
       },
       resolve: {
         alias: {

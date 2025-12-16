@@ -67,7 +67,8 @@ fi
 # Check for .env file
 if [ ! -f ".env" ] && [ ! -f ".env.local" ]; then
     echo -e "${YELLOW}⚠️  Warning: No .env file found${NC}"
-    echo -e "${YELLOW}   Create .env with: API_KEY=your_gemini_api_key${NC}"
+    echo -e "${YELLOW}   Create .env with: LM_STUDIO_URL=http://127.0.0.1:1234/v1${NC}"
+    echo -e "${YELLOW}                     LM_STUDIO_MODEL=llama-3.1-instruct-13b${NC}"
     echo ""
 fi
 

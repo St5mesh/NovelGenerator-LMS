@@ -1,6 +1,13 @@
+/**
+ * @deprecated This file is deprecated and should not be used.
+ * The application has migrated to LM Studio for local LLM inference.
+ * Use lmStudioService.ts instead.
+ * 
+ * This file is kept for reference only and may be removed in future versions.
+ */
 
-
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+// Google Generative AI SDK imports are commented out as this service is deprecated
+// import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { GEMINI_MODEL_NAME } from '../constants';
 import { withResilienceTracking, apiResilienceManager } from '../utils/apiResilienceUtils';
 
