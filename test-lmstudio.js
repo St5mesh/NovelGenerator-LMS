@@ -5,12 +5,13 @@
  * This tests basic connectivity and text generation
  */
 
-const LM_STUDIO_URL = process.env.LM_STUDIO_URL || 'http://10.50.10.14:1234/v1';
+const LM_STUDIO_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1';
 const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'llama-3.1-instruct-13b';
 
 console.log('🧪 Testing LM Studio Connection');
 console.log(`📍 URL: ${LM_STUDIO_URL}`);
-console.log(`🤖 Model: ${LM_STUDIO_MODEL}\n`);
+console.log(`🤖 Model: ${LM_STUDIO_MODEL}`);
+console.log('💡 Tip: Set LM_STUDIO_URL environment variable to use a different server\n');
 
 // Test 1: Check if LM Studio is accessible
 async function testConnectivity() {

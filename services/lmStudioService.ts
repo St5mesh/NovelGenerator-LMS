@@ -1,7 +1,7 @@
 
 import { withResilienceTracking, apiResilienceManager } from '../utils/apiResilienceUtils';
 
-const LM_STUDIO_BASE_URL = process.env.LM_STUDIO_URL || 'http://10.50.10.14:1234/v1';
+const LM_STUDIO_BASE_URL = process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1';
 const LM_STUDIO_MODEL = process.env.LM_STUDIO_MODEL || 'llama-3.1-instruct-13b';
 
 interface ChatMessage {
@@ -319,7 +319,7 @@ class APIRequestQueue {
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       const request: QueuedRequest = {
-        id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         fn,
         resolve,
         reject,

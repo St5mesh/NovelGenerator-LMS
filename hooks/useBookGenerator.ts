@@ -17,6 +17,8 @@ import { LM_STUDIO_MODEL_NAME } from '../constants';
 import { OUTLINE_PARAMS, CHAPTER_CONTENT_PARAMS, ANALYSIS_PARAMS, EDITING_PARAMS, EXTRACTION_PARAMS, TITLE_PARAMS } from '../constants/generationParams';
 
 // JSON Schema type definitions for LM Studio
+// Using a local enum instead of a library to avoid additional dependencies
+// and to keep the schema definitions simple and compatible with LM Studio's expectations
 enum SchemaType {
   STRING = 'string',
   INTEGER = 'integer',

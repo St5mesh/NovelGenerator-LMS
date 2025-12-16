@@ -1251,7 +1251,7 @@ The pipeline generates multi-threaded narratives. It tracks multiple character p
 ## Requirements
 
 - **Node.js** 16+ (tested on 22.18.0)
-- **LM Studio** - Running locally with llama-3.1-instruct-13b model at http://10.50.10.14:1234/v1
+- **LM Studio** - Running locally with llama-3.1-instruct-13b model at http://127.0.0.1:1234/v1
 - **Browser** - Chrome, Safari, or Firefox (for PDF export)
 
 ## Installation
@@ -1260,7 +1260,7 @@ The pipeline generates multi-threaded narratives. It tracks multiple character p
 
 1. Download and install [LM Studio](https://lmstudio.ai/)
 2. Download the `llama-3.1-instruct-13b` model (or your preferred model)
-3. Start LM Studio server on `http://10.50.10.14:1234/v1`
+3. Start LM Studio server on `http://127.0.0.1:1234/v1`
 4. Ensure the following endpoints are available:
    - `GET /v1/models`
    - `POST /v1/chat/completions`
@@ -1276,13 +1276,13 @@ npm install
 
 Create `.env` file in project root:
 ```env
-LM_STUDIO_URL=http://10.50.10.14:1234/v1
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
 LM_STUDIO_MODEL=llama-3.1-instruct-13b
 ```
 
 Or use `.env.local`:
 ```env
-LM_STUDIO_URL=http://10.50.10.14:1234/v1
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
 LM_STUDIO_MODEL=llama-3.1-instruct-13b
 ```
 
@@ -1490,7 +1490,7 @@ generator/
 **LM Studio Settings:** `.env` or `.env.local`
 
 ```env
-LM_STUDIO_URL=http://10.50.10.14:1234/v1
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
 LM_STUDIO_MODEL=llama-3.1-instruct-13b
 ```
 
@@ -1521,7 +1521,7 @@ The system will use whatever model is loaded in LM Studio. Recommended models:
 **LM Studio Connection:**
 ```bash
 # Test if LM Studio is running
-curl http://10.50.10.14:1234/v1/models
+curl http://127.0.0.1:1234/v1/models
 
 # Expected response: JSON with available models
 ```
@@ -1532,7 +1532,7 @@ lsof -ti:3000 | xargs kill
 ```
 
 **LM Studio errors:**
-- Verify LM Studio is running: Check if you can access http://10.50.10.14:1234/v1/models in your browser
+- Verify LM Studio is running: Check if you can access http://127.0.0.1:1234/v1/models in your browser
 - Ensure the model is loaded in LM Studio
 - Check firewall settings if connecting from another machine
 - Verify `.env` settings match your LM Studio configuration

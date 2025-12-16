@@ -16,7 +16,7 @@ This document explains the changes made to migrate NovelGenerator from Google's 
   
 - **New Environment Variables**:
   ```env
-  LM_STUDIO_URL=http://10.50.10.14:1234/v1
+  LM_STUDIO_URL=http://127.0.0.1:1234/v1
   LM_STUDIO_MODEL=llama-3.1-instruct-13b
   ```
 
@@ -92,7 +92,7 @@ await generateLMStudioTextStream(prompt, onChunk, systemInstruction, temperature
 ```bash
 # Create .env file
 cat > .env << EOF
-LM_STUDIO_URL=http://10.50.10.14:1234/v1
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
 LM_STUDIO_MODEL=llama-3.1-instruct-13b
 EOF
 
