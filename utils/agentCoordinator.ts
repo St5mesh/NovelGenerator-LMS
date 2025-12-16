@@ -485,7 +485,7 @@ export class AgentCoordinator {
             console.log(`📝 Editing log: ${entry.message}`);
           }
         },
-        generateGeminiText
+        generateLMStudioText
       );
 
       return editingResult.refinedContent;
