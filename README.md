@@ -1251,29 +1251,43 @@ The pipeline generates multi-threaded narratives. It tracks multiple character p
 ## Requirements
 
 - **Node.js** 16+ (tested on 22.18.0)
-- **Google Gemini API key** - Free tier available at [aistudio.google.com](https://aistudio.google.com/)
+- **LM Studio** - Running locally with llama-3.1-instruct-13b model at http://127.0.0.1:1234/v1
 - **Browser** - Chrome, Safari, or Firefox (for PDF export)
 
 ## Installation
 
-1. **Install dependencies:**
+### 1. Setup LM Studio
+
+1. Download and install [LM Studio](https://lmstudio.ai/)
+2. Download the `llama-3.1-instruct-13b` model (or your preferred model)
+3. Start LM Studio server on `http://127.0.0.1:1234/v1`
+4. Ensure the following endpoints are available:
+   - `GET /v1/models`
+   - `POST /v1/chat/completions`
+   - `POST /v1/embeddings`
+
+### 2. Install NovelGenerator Dependencies
+
 ```bash
 npm install
 ```
 
-2. **Configure API key:**
+### 3. Configure LM Studio Connection
 
 Create `.env` file in project root:
 ```env
-API_KEY=your_gemini_api_key_here
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
+LM_STUDIO_MODEL=llama-3.1-instruct-13b
 ```
 
 Or use `.env.local`:
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
+LM_STUDIO_MODEL=llama-3.1-instruct-13b
 ```
 
-3. **Start development server:**
+### 4. Start Development Server
+
 ```bash
 npm run dev
 ```
@@ -1415,8 +1429,10 @@ OUTPUT: Polished Chapter Text
 - TailwindCSS (styling)
 
 **AI/Backend:**
-- Google Gemini API 1.1.0 (`@google/genai`)
-- Model: `gemini-2.5-flash`
+- LM Studio Local Inference
+- Model: `llama-3.1-instruct-13b` (13B parameters)
+- API: OpenAI-compatible endpoints (chat/completions, models, embeddings)
+- Connection: HTTP REST API with fetch
 
 **Libraries:**
 - JSZip (EPUB generation via CDN)
@@ -1457,7 +1473,8 @@ generator/
 │   └── parserUtils.ts          # Text parsing helpers
 │
 ├── services/
-│   └── geminiService.ts        # API wrapper with retry logic
+│   ├── lmStudioService.ts      # LM Studio API wrapper with retry logic
+│   └── geminiService.ts        # Legacy Gemini service (deprecated)
 │
 ├── hooks/
 │   └── useBookGenerator.ts     # Main generation state machine
@@ -1470,33 +1487,62 @@ generator/
 
 ## Configuration
 
-**File:** `constants/generationParams.ts`
+**LM Studio Settings:** `.env` or `.env.local`
+
+```env
+LM_STUDIO_URL=http://127.0.0.1:1234/v1
+LM_STUDIO_MODEL=llama-3.1-instruct-13b
+```
+
+**Generation Parameters:** `constants/generationParams.ts`
 
 ```typescript
-export const GENERATION_PARAMS = {
-  model: 'gemini-2.5-flash',
-  temperature: 0.7,        // Creativity (0-1)
-  maxTokens: 8000,         // Max output length
-  topP: 0.95,
-  topK: 40
+export const CHAPTER_CONTENT_PARAMS = {
+  temperature: 0.8,        // Creativity (0-1)
+  topP: 0.9,              // Diversity of outputs
+  topK: 40                // Sampling strategy
 };
 ```
 
 **Adjustable parameters:**
-- `temperature`: Lower = more focused, Higher = more creative
-- `maxTokens`: Chapter length limit
-- `model`: Gemini model version
+- `temperature`: Lower = more focused, Higher = more creative (0.0-1.0)
+- `topP`: Controls diversity (0.0-1.0)
+- `topK`: Limits vocabulary sampling
+- `LM_STUDIO_MODEL`: Model name in LM Studio
+
+**Available Models:**
+The system will use whatever model is loaded in LM Studio. Recommended models:
+- `llama-3.1-instruct-13b` (balanced quality/speed)
+- `llama-3.1-instruct-70b` (higher quality, slower)
+- `mistral-instruct-7b` (faster, lower resource usage)
 
 ## Troubleshooting
+
+**LM Studio Connection:**
+```bash
+# Test if LM Studio is running
+curl http://127.0.0.1:1234/v1/models
+
+# Expected response: JSON with available models
+```
 
 **Port in use:**
 ```bash
 lsof -ti:3000 | xargs kill
 ```
 
-**API errors:**
-- Check API key in `.env`
-- Verify quota at https://aistudio.google.com/
+**LM Studio errors:**
+- Verify LM Studio is running: Check if you can access http://127.0.0.1:1234/v1/models in your browser
+- Ensure the model is loaded in LM Studio
+- Check firewall settings if connecting from another machine
+- Verify `.env` settings match your LM Studio configuration
+- Try restarting LM Studio if connection fails
+
+**Generation quality issues:**
+- Increase model size (e.g., switch to 70B model) for better quality
+- Adjust `temperature` in `generationParams.ts` (lower = more focused, higher = more creative)
+- Ensure adequate GPU/CPU resources for your chosen model
+- Check LM Studio logs for performance warnings
 
 **Dependencies:**
 ```bash
@@ -1510,4 +1556,4 @@ If you like this project, please give it a star ⭐
 
 For questions, feedback, or support, reach out to:
 
-[Artem KK](https://www.linkedin.com/in/kazkozdev/) | MIT [LICENSE](LICENSE) 
+[Artem KK](https://www.linkedin.com/in/kazkozdev/) | MIT [LICENSE](LICENSE)
