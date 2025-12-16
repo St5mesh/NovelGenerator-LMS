@@ -261,15 +261,15 @@ export async function generateLMStudioTextStream(
           signal: controller.signal,
         });
         
-        clearTimeout(timeoutId);
-        
         if (!response.ok) {
+          clearTimeout(timeoutId);
           const errorText = await response.text();
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
         const reader = response.body?.getReader();
         if (!reader) {
+          clearTimeout(timeoutId);
           throw new Error('No response body reader available');
         }
         
@@ -300,6 +300,8 @@ export async function generateLMStudioTextStream(
           }
         }
         
+        // Clear timeout only after streaming completes successfully
+        clearTimeout(timeoutId);
         return fullText;
       } catch (error) {
         clearTimeout(timeoutId);
