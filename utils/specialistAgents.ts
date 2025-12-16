@@ -3,7 +3,7 @@
  * Specialized agents for different aspects of chapter generation
  */
 
-import { generateGeminiText } from '../services/geminiService';
+import { generateGeminiText } from '../services/lmStudioService';
 import { ParsedChapterPlan } from '../types';
 import { StructureContext, CharacterContext, SceneContext, CoherenceConstraints } from './coherenceManager';
 import { getFormattedPrompt, PromptNames, formatPrompt } from './promptLoader';

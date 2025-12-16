@@ -4,7 +4,7 @@
  * This agent uses a multi-step reasoning process to analyze and improve chapters
  */
 
-import { generateGeminiText } from '../services/geminiService';
+import { generateGeminiText } from '../services/lmStudioService';
 import { ParsedChapterPlan, AgentLogEntry } from '../types';
 import { getFormattedPrompt, PromptNames } from './promptLoader';
 
